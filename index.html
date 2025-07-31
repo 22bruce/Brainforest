@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Mind Map</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="toolbar">
+        <h1>Brainforest 🧠🌳 </h1>
+        <div class="controls">
+            <button id="resetZoom">Reset Zoom</button>
+            <button id="centerView">Center View</button>
+            <button id="exportMap">Export</button>
+        </div>
+    </div>
+    
+    <div id="canvasContainer">
+        <canvas id="mindMapCanvas"></canvas>
+    </div>
+    
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="menu-item" id="addSubtopic">Add Subtopic</div>
+        <div class="menu-item" id="editTopic">Edit</div>
+        <div class="menu-item" id="deleteTopic">Delete</div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Ask a Question</h3>
+            
+            <!-- Context information box -->
+            <div id="contextBox" class="context-box">
+                <div class="context-header">
+                    <span>Adding subtopic to: <strong id="contextParentTitle">Main Topic</strong></span>
+                    <button id="toggleContext" class="toggle-button">Show Details</button>
+                </div>
+                <div id="contextDetails" class="context-details" style="display: none;">
+                    <p id="contextParentDescription">No additional context available.</p>
+                </div>
+            </div>
+            
+            <textarea id="questionInput" placeholder="Enter your question here..." rows="3"></textarea>
+            <div class="modal-status" id="loadingStatus" style="display: none;">
+                <div class="spinner"></div>
+                <span id="loadingText">Generating answer...</span>
+            </div>
+            <div class="modal-buttons">
+                <button id="askQuestion">Ask</button>
+                <button id="cancelEdit">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Suppress DevTools related 404 errors for local development
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+            const errorStr = args.join(' ');
+            if (errorStr.includes('.well-known/appspecific') || errorStr.includes('404')) {
+                // Suppress these harmless DevTools warnings
+                return;
+            }
+            originalConsoleError.apply(console, args);
+        };
+        
+        // Check for stored API key when coming from demo page
+        let apiKey = "ADD_YOUR_API_KEY_HERE";
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.get('useStoredKey') === 'true') {
+            const storedKey = localStorage.getItem('gemini_api_key');
+            if (storedKey) {
+                apiKey = storedKey;
+                console.log('Using stored API key from demo page');
+            }
+        }
+        
+        // Inline configuration to ensure it's available
+        window.llmConfig = {
+            llm: {
+                endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+                api_key: apiKey,
+                model: "gemini-pro",
+                temperature: 0.2,
+                system_prompt: "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> one small paragraph (2-3 sentences) explaining the key concept </description>\n</answer>\n\nPlease summarize following text,",
+                followup_prompt: "The user is creating a mind map about a topic. You are being asked a follow-up question about a specific subtopic. Given the parent topic and its information in <context> blocks, and a follow-up question in <question> blocks, provide a concise answer that relates to the context. Format your answer exactly as follows:\n\n<answer>\n<title> short title related to the question and context </title>\n<description> one small paragraph (2-3 sentences) specifically addressing the question in context of the parent topic </description>\n</answer>\n\nMake your response highly relevant to both the context and the specific question."
+            }
+        };
+    </script>
+    <script src="llm-service.js"></script>
+    <script src="mindmap.js"></script>
+</body>
+</html>

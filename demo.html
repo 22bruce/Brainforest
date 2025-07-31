@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindMap LLM Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .demo-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .demo-notes {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fffde7;
+            border-left: 4px solid #ffd600;
+            border-radius: 4px;
+        }
+        .api-key-form {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>MindMap LLM Demo</h1>
+            <p>An interactive mind mapping tool with LLM integration</p>
+        </div>
+
+        <div class="api-key-form">
+            <h3>Enter your Google Gemini API Key</h3>
+            <p>Your API key is stored locally in your browser and never sent to any server except the Google Gemini API.</p>
+            <input type="text" id="apiKeyInput" placeholder="Enter your Gemini API key" style="width: 100%; padding: 10px; margin: 10px 0;">
+            <button class="button" id="startButton">Start Mind Map</button>
+        </div>
+
+        <div class="demo-notes">
+            <h3>CORS-Free Demo</h3>
+            <p>This demo page avoids CORS issues by using inline configuration instead of loading from config.json. It's a great way to test the application without setting up a local server.</p>
+            <p>To get a Google Gemini API key:</p>
+            <ol>
+                <li>Visit the <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                <li>Sign in with your Google account</li>
+                <li>Create a new API key</li>
+                <li>Copy and paste the key into the field above</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('startButton').addEventListener('click', function() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter your Google Gemini API key');
+                return;
+            }
+            
+            // Store API key in localStorage
+            localStorage.setItem('gemini_api_key', apiKey);
+            
+            // Redirect to index.html with a parameter to use the stored key
+            window.location.href = 'index.html?useStoredKey=true';
+        });
+    </script>
+</body>
+</html>

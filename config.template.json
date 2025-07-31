@@ -1,0 +1,10 @@
+{
+    "llm": {
+        "endpoint": "https://generativelanguage.googleapis.com",
+        "api_key": "ADD_YOUR_API_KEY_HERE",
+        "model": "gemini-2.5-flash",
+        "temperature": 0.2,
+        "system_prompt": "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> one small paragraph (2-3 sentences) explaining the key concept </description>\n</answer>\n\nPlease summarize following text,",
+        "followup_prompt": "The user is creating a mind map about a topic. You are being asked a follow-up question about a specific subtopic. Given the parent topic and its information in <context> blocks, and a follow-up question in <question> blocks, provide a concise answer that relates to the context. Format your answer exactly as follows:\n\n<answer>\n<title> short title related to the question and context </title>\n<description> one small paragraph (2-3 sentences) specifically addressing the question in context of the parent topic </description>\n</answer>\n\nMake your response highly relevant to both the context and the specific question."
+    }
+}
