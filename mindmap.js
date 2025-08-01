@@ -862,6 +862,7 @@ class MindMap {
         document.getElementById('resetZoom').addEventListener('click', () => this.resetZoom());
         document.getElementById('centerView').addEventListener('click', () => this.centerView());
         document.getElementById('exportMap').addEventListener('click', () => this.exportMap());
+        document.getElementById('addModel').addEventListener('click', () => this.showModelModal());
         
         // Context menu events
         document.getElementById('addSubtopic').addEventListener('click', () => this.addSubtopic());
@@ -872,9 +873,18 @@ class MindMap {
         document.getElementById('askQuestion').addEventListener('click', () => this.askQuestion());
         document.getElementById('cancelEdit').addEventListener('click', () => this.closeQuestionModal());
         
+        // Model modal events
+        document.getElementById('saveModel').addEventListener('click', () => this.saveModelConfiguration());
+        document.getElementById('cancelModel').addEventListener('click', () => this.closeModelModal());
+        
         // Close modal when clicking outside
         document.getElementById('editModal').addEventListener('click', (e) => {
             if (e.target.id === 'editModal') this.closeQuestionModal();
+        });
+        
+        // Close model modal when clicking outside
+        document.getElementById('modelModal').addEventListener('click', (e) => {
+            if (e.target.id === 'modelModal') this.closeModelModal();
         });
         
         // Allow pressing Enter in the question input to submit
@@ -882,6 +892,27 @@ class MindMap {
             if (e.key === 'Enter' && e.ctrlKey) {
                 e.preventDefault();
                 this.askQuestion();
+            }
+        });
+        
+        // Allow pressing Enter in the model configuration modal to save
+        document.getElementById('modelNameInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.saveModelConfiguration();
+            }
+        });
+        
+        // Allow pressing Escape to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Close any open modals
+                if (document.getElementById('editModal').style.display === 'block') {
+                    this.closeQuestionModal();
+                }
+                if (document.getElementById('modelModal').style.display === 'block') {
+                    this.closeModelModal();
+                }
             }
         });
         
@@ -1426,6 +1457,140 @@ class MindMap {
         if (existingError) {
             existingError.remove();
         }
+    }
+
+    showModelModal() {
+        // Load existing configuration if available
+        const currentConfig = window.llmService.config.llm;
+        
+        // Pre-fill the form with current values
+        document.getElementById('endpointInput').value = currentConfig.endpoint || 'https://generativelanguage.googleapis.com';
+        document.getElementById('apiKeyInput').value = currentConfig.api_key || '';
+        document.getElementById('modelNameInput').value = currentConfig.model || 'gemini-2.5-flash';
+        
+        // Reset loading state
+        document.getElementById('modelLoadingStatus').style.display = 'none';
+        document.getElementById('saveModel').disabled = false;
+        
+        // Clear any error messages
+        const modalContent = document.getElementById('modelModal').querySelector('.modal-content');
+        const existingError = modalContent.querySelector('.modal-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Show the modal
+        document.getElementById('modelModal').style.display = 'block';
+        document.getElementById('endpointInput').focus();
+    }
+
+    closeModelModal() {
+        // Hide the modal
+        document.getElementById('modelModal').style.display = 'none';
+        
+        // Reset loading state
+        document.getElementById('modelLoadingStatus').style.display = 'none';
+        document.getElementById('saveModel').disabled = false;
+        
+        // Clear any error messages
+        const modalContent = document.getElementById('modelModal').querySelector('.modal-content');
+        const existingError = modalContent.querySelector('.modal-error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
+    async saveModelConfiguration() {
+        const endpoint = document.getElementById('endpointInput').value.trim();
+        const apiKey = document.getElementById('apiKeyInput').value.trim();
+        const model = document.getElementById('modelNameInput').value.trim();
+        
+        // Validate inputs
+        if (!endpoint) {
+            this.showModelError('Please enter an endpoint URL');
+            return;
+        }
+        
+        if (!apiKey) {
+            this.showModelError('Please enter an API key');
+            return;
+        }
+        
+        if (!model) {
+            this.showModelError('Please enter a model name');
+            return;
+        }
+        
+        // Show loading state
+        document.getElementById('modelLoadingStatus').style.display = 'flex';
+        document.getElementById('saveModel').disabled = true;
+        document.getElementById('modelLoadingText').textContent = 'Saving configuration...';
+        
+        try {
+            // Update the LLM service configuration
+            window.llmService.config.llm = {
+                ...window.llmService.config.llm,
+                endpoint: endpoint,
+                api_key: apiKey,
+                model: model
+            };
+            
+            // Store the configuration in localStorage for persistence
+            const configToStore = {
+                endpoint: endpoint,
+                api_key: apiKey,
+                model: model,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('user_llm_config', JSON.stringify(configToStore));
+            
+            // Test the configuration by making a simple request
+            document.getElementById('modelLoadingText').textContent = 'Testing configuration...';
+            
+            // Create a simple test to validate the configuration works
+            const testQuestion = "Hello";
+            const testAnswer = await window.llmService.generateAnswer(testQuestion);
+            
+            if (testAnswer && testAnswer.title) {
+                // Configuration works
+                document.getElementById('modelLoadingText').textContent = 'Configuration saved successfully!';
+                
+                // Close modal after a short delay
+                setTimeout(() => {
+                    this.closeModelModal();
+                }, 1500);
+                
+                console.log('Model configuration saved and tested successfully');
+            } else {
+                throw new Error('Configuration test failed - invalid response format');
+            }
+            
+        } catch (error) {
+            console.error('Error saving model configuration:', error);
+            this.showModelError('Failed to save configuration: ' + error.message);
+            
+            // Reset loading state
+            document.getElementById('modelLoadingStatus').style.display = 'none';
+            document.getElementById('saveModel').disabled = false;
+        }
+    }
+
+    showModelError(message) {
+        // Remove any existing error
+        const modalContent = document.getElementById('modelModal').querySelector('.modal-content');
+        const existingError = modalContent.querySelector('.modal-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create and add new error message
+        const errorElement = document.createElement('div');
+        errorElement.className = 'modal-error';
+        errorElement.textContent = message;
+        
+        // Insert before the buttons
+        const buttons = modalContent.querySelector('.modal-buttons');
+        modalContent.insertBefore(errorElement, buttons);
     }
     
     resetZoom() {

@@ -10,6 +10,7 @@
     <div id="toolbar">
         <h1>Brainforest 🧠🌳 </h1>
         <div class="controls">
+            <button id="addModel">Add Model</button>
             <button id="resetZoom">Reset Zoom</button>
             <button id="centerView">Center View</button>
             <button id="exportMap">Export</button>
@@ -55,6 +56,38 @@
         </div>
     </div>
     
+    <!-- Model Configuration Modal -->
+    <div id="modelModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Model Configuration</h3>
+            
+            <div class="form-group">
+                <label for="endpointInput">Endpoint URL:</label>
+                <input type="text" id="endpointInput" placeholder="e.g., https://generativelanguage.googleapis.com" value="https://generativelanguage.googleapis.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="apiKeyInput">API Key:</label>
+                <input type="password" id="apiKeyInput" placeholder="Enter your API key">
+            </div>
+            
+            <div class="form-group">
+                <label for="modelNameInput">Model Name:</label>
+                <input type="text" id="modelNameInput" placeholder="e.g., gemini-2.5-flash" value="gemini-2.5-flash">
+            </div>
+            
+            <div class="modal-status" id="modelLoadingStatus" style="display: none;">
+                <div class="spinner"></div>
+                <span id="modelLoadingText">Saving configuration...</span>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="saveModel">Save Configuration</button>
+                <button id="cancelModel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Suppress DevTools related 404 errors for local development
         const originalConsoleError = console.error;
@@ -68,28 +101,26 @@
         };
         
         // Check for stored API key when coming from demo page
-        let apiKey = "ADD_YOUR_API_KEY_HERE";
         const urlParams = new URLSearchParams(window.location.search);
         
         if (urlParams.get('useStoredKey') === 'true') {
             const storedKey = localStorage.getItem('gemini_api_key');
             if (storedKey) {
-                apiKey = storedKey;
+                // Inline configuration for demo mode
+                window.llmConfig = {
+                    llm: {
+                        endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+                        api_key: storedKey,
+                        model: "gemini-pro",
+                        temperature: 0.2,
+                        system_prompt: "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> one small paragraph (2-3 sentences) explaining the key concept </description>\n</answer>\n\nPlease summarize following text,",
+                        followup_prompt: "The user is creating a mind map about a topic. You are being asked a follow-up question about a specific subtopic. Given the parent topic and its information in <context> blocks, and a follow-up question in <question> blocks, provide a concise answer that relates to the context. Format your answer exactly as follows:\n\n<answer>\n<title> short title related to the question and context </title>\n<description> one small paragraph (2-3 sentences) specifically addressing the question in context of the parent topic </description>\n</answer>\n\nMake your response highly relevant to both the context and the specific question."
+                    }
+                };
                 console.log('Using stored API key from demo page');
             }
         }
-        
-        // Inline configuration to ensure it's available
-        window.llmConfig = {
-            llm: {
-                endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-                api_key: apiKey,
-                model: "gemini-pro",
-                temperature: 0.2,
-                system_prompt: "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> one small paragraph (2-3 sentences) explaining the key concept </description>\n</answer>\n\nPlease summarize following text,",
-                followup_prompt: "The user is creating a mind map about a topic. You are being asked a follow-up question about a specific subtopic. Given the parent topic and its information in <context> blocks, and a follow-up question in <question> blocks, provide a concise answer that relates to the context. Format your answer exactly as follows:\n\n<answer>\n<title> short title related to the question and context </title>\n<description> one small paragraph (2-3 sentences) specifically addressing the question in context of the parent topic </description>\n</answer>\n\nMake your response highly relevant to both the context and the specific question."
-            }
-        };
+        // If not in demo mode, let the LLM service load config.json normally
     </script>
     <script src="llm-service.js"></script>
     <script src="mindmap.js"></script>

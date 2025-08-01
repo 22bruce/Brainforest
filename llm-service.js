@@ -13,10 +13,14 @@ class LLMService {
                     api_key: "",
                     model: "gemini-2.5-flash",
                     temperature: 0.2,
-                    system_prompt: "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> 2-3 main points </description>\n</answer>\n\nPlease summarize following text,"
+                    system_prompt: "The user is student, He needs help in study. Given question in <question> blocks, provide answer in very short form in following format,\n\n<answer>\n<title> short title </title>\n<description> 2-3 main points </description>\n</answer>\n\nPlease summarize following text,",
+                    followup_prompt: "The user is creating a mind map about a topic. You are being asked a follow-up question about a specific subtopic. Given the parent topic and its information in <context> blocks, and a follow-up question in <question> blocks, provide a concise answer that relates to the context. Format your answer exactly as follows:\n\n<answer>\n<title> short title related to the question and context </title>\n<description> one small paragraph (2-3 sentences) specifically addressing the question in context of the parent topic </description>\n</answer>\n\nMake your response highly relevant to both the context and the specific question."
                 }
             };
         }
+        
+        // Check for user-saved configuration in localStorage
+        this.loadUserConfig();
         
         // Load config from file and store it as a promise to ensure it's resolved before API calls
         this.configLoadPromise = this.loadConfig();
@@ -33,6 +37,35 @@ class LLMService {
         
         console.log('Initial config:', this.config);
         this.isInitialized = true;
+    }
+
+    loadUserConfig() {
+        try {
+            const userConfigStr = localStorage.getItem('user_llm_config');
+            if (userConfigStr) {
+                const userConfig = JSON.parse(userConfigStr);
+                console.log('Loading user configuration from localStorage');
+                
+                // Merge user config with current config
+                this.config.llm = {
+                    ...this.config.llm,
+                    endpoint: userConfig.endpoint || this.config.llm.endpoint,
+                    api_key: userConfig.api_key || this.config.llm.api_key,
+                    model: userConfig.model || this.config.llm.model
+                };
+                
+                // Log the API key (partially masked for security)
+                const apiKey = this.config.llm.api_key || '';
+                const maskedKey = apiKey.length > 8 
+                    ? apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4)
+                    : '(not set)';
+                console.log(`User API key loaded: ${maskedKey}`);
+                console.log(`User model: ${this.config.llm.model}`);
+                console.log(`User endpoint: ${this.config.llm.endpoint}`);
+            }
+        } catch (error) {
+            console.error('Error loading user configuration:', error);
+        }
     }
 
     async loadConfig() {

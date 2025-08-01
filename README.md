@@ -22,10 +22,12 @@ Brainforest combines the visual power of mind maps with the intelligence of AI t
 - **Export**: Save your mind map as a PNG image
 - **Context-Aware AI**: Full branch context from root to current node for better AI responses
 - **Editable Main Topic**: Edit the central/root topic of your mind map
+- **Custom Model Configuration**: Add your own LLM endpoints and API keys through the UI
 
 ### AI-Assisted Content Generation
 
 - **LLM Integration**: Ask questions and get AI-generated content for your nodes
+- **Multiple LLM Support**: Configure different LLM providers and models through the "Add Model" feature
 - **Full Branch Context**: Unlike simple parent-child relationships, Brainforest provides the entire branch context from root to current node for more intelligent AI responses
 - **Context-Aware Responses**: When creating subtopics, the LLM considers the complete hierarchy path
 - **Customizable Prompts**: Configure how the LLM responds via the config file
@@ -43,8 +45,10 @@ Brainforest combines the visual power of mind maps with the intelligence of AI t
 
 1. Clone or download the Brainforest repository
 2. **Copy the config template**: Copy `config.template.json` to `config.json`
-3. **Get a Gemini API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and create a new API key
-4. **Configure your API key**: Open `config.json` and replace `ADD_YOUR_API_KEY_HERE` with your actual key
+3. **Configure your LLM**: You have two options:
+   - **Option A (Recommended)**: Use the "Add Model" button in the UI after opening the app
+   - **Option B**: Manually edit `config.json` and replace `ADD_YOUR_API_KEY_HERE` with your actual API key
+4. **Get a Gemini API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and create a new API key
 5. **Never commit config.json**: The file is already in `.gitignore` to prevent accidental API key exposure
 6. Open `index.html` in a web browser or use a local web server:
 
@@ -76,6 +80,18 @@ Brainforest combines the visual power of mind maps with the intelligence of AI t
 - **Move a Node**: Click and drag a node to reposition it
 
 ### Creating and Editing Content
+
+#### Adding a Custom LLM Model
+
+1. Click the "Add Model" button in the top toolbar
+2. In the modal dialog that appears:
+   - **Endpoint URL**: Enter the API endpoint (e.g., `https://generativelanguage.googleapis.com`)
+   - **API Key**: Enter your API key (this will be stored securely in your browser)
+   - **Model Name**: Enter the model name (e.g., `gemini-2.5-flash`)
+3. Click "Save Configuration" to test and save your settings
+4. The configuration will be stored locally and used for all future AI interactions
+
+> **Security Note**: API keys are stored only in your browser's local storage and never transmitted to our servers.
 
 #### Adding a New Subtopic
 
@@ -128,7 +144,23 @@ The markdown formatting will be rendered when displaying the node in the mind ma
 
 ## Configuration
 
-The LLM integration can be configured through the `config.json` file:
+### Easy Configuration (Recommended)
+
+The easiest way to configure your LLM is through the built-in "Add Model" feature:
+
+1. Open the application in your browser
+2. Click the "Add Model" button in the top toolbar
+3. Enter your LLM provider details:
+   - **Endpoint**: The API endpoint URL
+   - **API Key**: Your API key from your LLM provider
+   - **Model**: The specific model name to use
+4. Click "Save Configuration" to test and store your settings
+
+This method stores your configuration securely in your browser's local storage and automatically validates that your settings work.
+
+### Manual Configuration
+
+Alternatively, you can configure the LLM integration through the `config.json` file:
 
 ```json
 {
@@ -175,20 +207,27 @@ You can customize the appearance of the mind map by editing the `styles.css` fil
 
 #### Using Other LLM Providers
 
-To use other LLM providers, modify the endpoint and adjust the request format in `llm-service.js`:
+Brainforest supports various LLM providers through the "Add Model" feature:
 
-##### Example: Using OpenAI
+##### Google Gemini (Default)
 
-To use OpenAI instead of Gemini:
+- **Endpoint**: `https://generativelanguage.googleapis.com`
+- **Models**: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-pro`
+- **API Key**: Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-1. Change the endpoint in `config.json`:
+##### OpenAI
 
-```json
-"endpoint": "https://api.openai.com/v1/chat/completions",
-```
+- **Endpoint**: `https://api.openai.com/v1/chat/completions`
+- **Models**: `gpt-4`, `gpt-3.5-turbo`, etc.
+- **API Key**: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
 
-1. Update the API request format in `llm-service.js` to match OpenAI's API requirements
-1. Update the response parsing to handle OpenAI's response format
+##### Anthropic Claude
+
+- **Endpoint**: `https://api.anthropic.com/v1/messages`
+- **Models**: `claude-3-opus`, `claude-3-sonnet`, etc.
+- **API Key**: Get from [Anthropic Console](https://console.anthropic.com/)
+
+> **Note**: While the UI allows you to configure any endpoint, some providers may require modifications to the request format in `llm-service.js` for full compatibility. The current implementation is optimized for Google Gemini's API format.
 
 ## Prompt Format
 
