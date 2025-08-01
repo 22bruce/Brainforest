@@ -4,6 +4,8 @@ An interactive mind mapping tool that uses Large Language Models (LLMs) to help 
 
 Brainforest combines the visual power of mind maps with the intelligence of AI to help you explore ideas, study topics, and organize knowledge in an intuitive tree-like structure.
 
+![MyImage](./assets/image.png)
+
 ## What Makes Brainforest Special
 
 🌳 **Full Branch Context**: Unlike traditional mind mapping tools that only consider parent-child relationships, Brainforest provides the AI with the complete path from the root topic down to the current node. This means when you're creating a deep subtopic, the AI understands the entire context hierarchy.
