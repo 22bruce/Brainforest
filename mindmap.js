@@ -1354,17 +1354,24 @@ class MindMap {
                 // Prepare context for subtopic questions
                 let context = null;
                 
-                // If this is a subtopic question (not for the root node),
-                // include the entire branch context from root to current node
+                // Always include context when adding a child node
+                // This ensures the LLM knows what the parent topic is about
                 console.log("Selected node level:", this.selectedNode.level);
                 console.log("Selected node text:", this.selectedNode.text);
                 
-                if (this.selectedNode.level > 0) {
-                    console.log("Building context for non-root node...");
+                if (this.selectedNode.level === 0) {
+                    // For root node children, provide the root node as context
+                    console.log("Building context for root node child...");
+                    context = `Main Topic: ${this.selectedNode.text}`;
+                    if (this.selectedNode.description && this.selectedNode.description.trim()) {
+                        context += `\n  ↳ Details: ${this.selectedNode.description}`;
+                    }
+                    console.log("Using root node context:", context);
+                } else {
+                    // For deeper levels, use the full branch context
+                    console.log("Building context for deeper level node...");
                     context = this.buildBranchContext(this.selectedNode);
                     console.log("Using full branch context for subtopic:", context);
-                } else {
-                    console.log("Root node selected - no context needed");
                 }
                 
                 // Call the LLM service with the context
@@ -1460,10 +1467,27 @@ class MindMap {
     }
 
     showModelModal() {
-        // Load existing configuration if available
-        const currentConfig = window.llmService.config.llm;
+        // Load existing configuration, prioritizing user-saved config from localStorage
+        let currentConfig = window.llmService.config.llm;
         
-        // Pre-fill the form with current values
+        // Check if there's a user-saved configuration in localStorage
+        try {
+            const userConfigStr = localStorage.getItem('user_llm_config');
+            if (userConfigStr) {
+                const userConfig = JSON.parse(userConfigStr);
+                // Use user config if available, otherwise fall back to current config
+                currentConfig = {
+                    endpoint: userConfig.endpoint || currentConfig.endpoint,
+                    api_key: userConfig.api_key || currentConfig.api_key,
+                    model: userConfig.model || currentConfig.model
+                };
+                console.log('Loading user configuration in modal from localStorage');
+            }
+        } catch (error) {
+            console.warn('Failed to load user configuration from localStorage:', error);
+        }
+        
+        // Pre-fill the form with current values (prioritizing user-saved config)
         document.getElementById('endpointInput').value = currentConfig.endpoint || 'https://generativelanguage.googleapis.com';
         document.getElementById('apiKeyInput').value = currentConfig.api_key || '';
         document.getElementById('modelNameInput').value = currentConfig.model || 'gemini-2.5-flash';

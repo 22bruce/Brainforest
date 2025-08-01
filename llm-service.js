@@ -81,7 +81,29 @@ class LLMService {
                 // Only update if we got a valid config
                 if (loadedConfig && loadedConfig.llm) {
                     console.log('LLM Config loaded successfully from file');
+                    
+                    // Preserve user configuration that was loaded from localStorage
+                    const userConfigStr = localStorage.getItem('user_llm_config');
+                    let preservedUserConfig = null;
+                    if (userConfigStr) {
+                        try {
+                            preservedUserConfig = JSON.parse(userConfigStr);
+                        } catch (e) {
+                            console.warn('Failed to parse user config from localStorage');
+                        }
+                    }
+                    
+                    // Merge file config with preserved user config, giving priority to user config
                     this.config = loadedConfig;
+                    if (preservedUserConfig) {
+                        this.config.llm = {
+                            ...this.config.llm,
+                            endpoint: preservedUserConfig.endpoint || this.config.llm.endpoint,
+                            api_key: preservedUserConfig.api_key || this.config.llm.api_key,
+                            model: preservedUserConfig.model || this.config.llm.model
+                        };
+                        console.log('Preserved user configuration from localStorage after file load');
+                    }
                     
                     // Log the API key (partially masked for security)
                     const apiKey = this.config.llm.api_key || '';
