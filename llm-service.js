@@ -1,3 +1,5 @@
+console.log("=== LLM SERVICE v2.0 LOADED ===");
+
 class LLMService {
     constructor() {
         // Try to use the inline config first if available
@@ -154,41 +156,45 @@ class LLMService {
             throw new Error("Configuration not properly initialized");
         }
 
-        const { endpoint, api_key, model, temperature, system_prompt, followup_prompt } = this.config.llm;
+        const { endpoint, model, temperature, system_prompt, followup_prompt } = this.config.llm;
+        let { api_key } = this.config.llm;
 
-        // Validate API key
-        if (!api_key || api_key === "add_key_here" || api_key === "" || api_key === "YOUR_API_KEY_HERE") {
-            console.error("API key is missing or invalid in config. Checking if inline config has a key...");
-            // Try to use the API key from window.llmConfig as a fallback
-            if (window.llmConfig && window.llmConfig.llm && window.llmConfig.llm.api_key) {
-                const inlineKey = window.llmConfig.llm.api_key;
-                if (inlineKey && inlineKey !== "add_key_here" && inlineKey !== "" && inlineKey !== "YOUR_API_KEY_HERE") {
-                    console.log("Using API key from inline config instead");
-                    api_key = inlineKey;
-                } else {
-                    console.error("API key missing or invalid. Check one of these sources:");
-                    console.error("1. config.json file (preferred)");
-                    console.error("2. Inline configuration in index.html");
-                    console.error("3. Use demo.html to input your API key directly");
-                    
-                    if (window.location.protocol === 'file:') {
-                        throw new Error("API key is missing and you're running from the file system (file://). Try using demo.html or run with a local web server to avoid CORS issues.");
+        // Detect API type based on endpoint FIRST, before API key validation
+        const isGeminiAPI = endpoint.includes('generativelanguage.googleapis.com');
+        const isOpenAICompatible = !isGeminiAPI;
+        
+        console.log(`=== API DETECTION DEBUG ===`);
+        console.log(`Raw endpoint: "${endpoint}"`);
+        console.log(`Contains 'generativelanguage.googleapis.com': ${endpoint.includes('generativelanguage.googleapis.com')}`);
+        console.log(`isGeminiAPI: ${isGeminiAPI}`);
+        console.log(`isOpenAICompatible: ${isOpenAICompatible}`);
+        console.log(`=== END DEBUG ===`);
+        
+        console.log(`Detected API type: ${isGeminiAPI ? 'Gemini' : 'OpenAI-compatible'}`);
+        console.log(`Endpoint: ${endpoint}`);
+        console.log(`Model: ${model}`);
+
+        // Validate API key - different validation for different API types
+        if (isGeminiAPI) {
+            // Gemini requires a real API key
+            if (!api_key || api_key === "add_key_here" || api_key === "" || api_key === "YOUR_API_KEY_HERE") {
+                console.error("Gemini API key is missing or invalid in config. Checking if inline config has a key...");
+                // Try to use the API key from window.llmConfig as a fallback
+                if (window.llmConfig && window.llmConfig.llm && window.llmConfig.llm.api_key) {
+                    const inlineKey = window.llmConfig.llm.api_key;
+                    if (inlineKey && inlineKey !== "add_key_here" && inlineKey !== "" && inlineKey !== "YOUR_API_KEY_HERE") {
+                        console.log("Using API key from inline config instead");
+                        api_key = inlineKey;
                     } else {
-                        throw new Error("API key is missing. Please add your API key to config.json or use demo.html");
+                        throw new Error("Gemini API requires a valid API key. Please add your API key in the configuration.");
                     }
-                }
-            } else {
-                console.error("API key missing or invalid. Check one of these sources:");
-                console.error("1. config.json file (preferred)");
-                console.error("2. Inline configuration in index.html");
-                console.error("3. Use demo.html to input your API key directly");
-                
-                if (window.location.protocol === 'file:') {
-                    throw new Error("API key is missing and you're running from the file system (file://). Try using demo.html or run with a local web server to avoid CORS issues.");
                 } else {
-                    throw new Error("API key is missing. Please add your API key to config.json or use demo.html");
+                    throw new Error("Gemini API requires a valid API key. Please add your API key in the configuration.");
                 }
             }
+        } else {
+            // OpenAI-compatible APIs (like Ollama) may not require an API key for local setups
+            console.log(`OpenAI-compatible API detected. API key: ${api_key ? (api_key === 'local' ? 'local' : '[MASKED]') : 'none (local setup)'}`);
         }
 
         // Choose prompt based on whether context is provided
@@ -207,25 +213,82 @@ class LLMService {
             console.log("Using standard prompt without context");
         }
 
-        console.log(`Sending request to Gemini API: ${endpoint}/v1beta/models/${model}:generateContent`);
+        console.log(`Sending request to LLM API: ${endpoint}`);
         
-        // Gemini API request format
-        const requestPayload = {
-            contents: [
-                {
-                    parts: [
-                        {
-                            text: fullPrompt
-                        }
-                    ]
-                }
-            ],
-            generationConfig: {
-                temperature: temperature
-            }
+        console.log(`Detected API type: ${isGeminiAPI ? 'Gemini' : 'OpenAI-compatible'}`);
+        console.log(`Endpoint: ${endpoint}`);
+        console.log(`Model: ${model}`);
+        console.log(`API Key: ${api_key ? (api_key === 'local' ? 'local' : '[MASKED]') : 'none'}`);
+        
+        let requestPayload;
+        let apiUrl;
+        let headers = {
+            'Content-Type': 'application/json'
         };
         
+        if (isGeminiAPI) {
+            // Gemini API request format
+            requestPayload = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: fullPrompt
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: temperature
+                }
+            };
+            
+            // Check if the endpoint already contains the full path
+            apiUrl = endpoint.includes(':generateContent') 
+                ? `${endpoint}?key=${api_key}` 
+                : `${endpoint}/v1beta/models/${model}:generateContent?key=${api_key}`;
+        } else {
+            // OpenAI-compatible API request format (for Ollama, OpenAI, etc.)
+            requestPayload = {
+                model: model,
+                messages: [
+                    {
+                        role: "user",
+                        content: fullPrompt
+                    }
+                ],
+                temperature: temperature,
+                max_tokens: 1000
+            };
+            
+            // For OpenAI-compatible APIs, use /v1/chat/completions endpoint
+            if (endpoint.endsWith('/v1')) {
+                apiUrl = `${endpoint}/chat/completions`;
+            } else if (endpoint.endsWith('/')) {
+                apiUrl = `${endpoint}v1/chat/completions`;
+            } else {
+                apiUrl = `${endpoint}/v1/chat/completions`;
+            }
+            
+            console.log(`Constructed OpenAI-compatible URL: ${apiUrl}`);
+            
+            // Add authorization header for OpenAI-compatible APIs
+            if (api_key && api_key !== 'local' && api_key !== '') {
+                headers['Authorization'] = `Bearer ${api_key}`;
+                console.log('Added Authorization header');
+            } else {
+                console.log('No Authorization header (local/empty API key)');
+            }
+        }
+        
         console.log("Request payload:", requestPayload);
+        console.log("API URL:", apiUrl);
+        
+        // Mask API key in logs
+        const maskedApiKey = api_key && api_key.length > 8 
+            ? api_key.substring(0, 4) + '...' + api_key.substring(api_key.length - 4)
+            : api_key || '(not set)';
+        console.log(`Making API request with masked API key: ${maskedApiKey}`);
             
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
@@ -239,23 +302,9 @@ class LLMService {
                 };
             }
             
-            // Make the request to the Gemini API with a 60 second timeout
-            // Check if the endpoint already contains the full path
-            const apiUrl = endpoint.includes(':generateContent') 
-                ? `${endpoint}?key=${api_key}` 
-                : `${endpoint}/v1beta/models/${model}:generateContent?key=${api_key}`;
-            
-            // Mask API key in logs
-            const maskedApiKey = api_key.length > 8 
-                ? api_key.substring(0, 4) + '...' + api_key.substring(api_key.length - 4)
-                : '(not set)';
-            console.log(`Making API request with masked API key: ${maskedApiKey}`);
-            
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: headers,
                 body: JSON.stringify(requestPayload),
                 signal: controller.signal
             });
@@ -267,12 +316,15 @@ class LLMService {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`API error: ${response.status}`, errorText);
+                console.error(`Failed URL: ${apiUrl}`);
+                console.error(`Request headers:`, headers);
+                console.error(`Request payload:`, requestPayload);
                 
                 // Provide more specific error messages based on status codes
                 if (response.status === 403) {
                     throw new Error(`API key error (403): Your API key may be invalid or doesn't have permission for this model. Check your API key in config.json.`);
                 } else if (response.status === 404) {
-                    throw new Error(`Endpoint not found (404): The API endpoint or model specified doesn't exist. Check your endpoint URL and model name in config.json.`);
+                    throw new Error(`Endpoint not found (404): The API endpoint '${apiUrl}' was not found. For local models, make sure the server is running and accessible. Server response: ${errorText}`);
                 } else if (response.status === 429) {
                     throw new Error(`Rate limit exceeded (429): You've exceeded your API quota or rate limit. Consider upgrading your API plan.`);
                 } else {
@@ -283,14 +335,25 @@ class LLMService {
             const data = await response.json();
             console.log("Full response data:", data);
             
-            // Extract text from Gemini API response
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-                console.error("Invalid response structure:", data);
-                throw new Error("Invalid response structure from Gemini API");
-            }
+            let rawAnswer;
             
-            const rawAnswer = data.candidates[0].content.parts[0].text;
-            console.log("Gemini response content:", rawAnswer);
+            if (isGeminiAPI) {
+                // Extract text from Gemini API response
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
+                    console.error("Invalid Gemini response structure:", data);
+                    throw new Error("Invalid response structure from Gemini API");
+                }
+                rawAnswer = data.candidates[0].content.parts[0].text;
+                console.log("Gemini response content:", rawAnswer);
+            } else {
+                // Extract text from OpenAI-compatible API response
+                if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+                    console.error("Invalid OpenAI-compatible response structure:", data);
+                    throw new Error("Invalid response structure from OpenAI-compatible API");
+                }
+                rawAnswer = data.choices[0].message.content;
+                console.log("OpenAI-compatible response content:", rawAnswer);
+            }
 
             // Parse the answer from the format
             return this.parseAnswer(rawAnswer);

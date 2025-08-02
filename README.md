@@ -229,7 +229,31 @@ Brainforest supports various LLM providers through the "Add Model" feature:
 - **Models**: `claude-3-opus`, `claude-3-sonnet`, etc.
 - **API Key**: Get from [Anthropic Console](https://console.anthropic.com/)
 
-> **Note**: While the UI allows you to configure any endpoint, some providers may require modifications to the request format in `llm-service.js` for full compatibility. The current implementation is optimized for Google Gemini's API format.
+##### Local Models with Ollama
+
+Brainforest now supports local LLM models running through Ollama or other OpenAI-compatible servers:
+
+- **Endpoint**: `http://localhost:11434/v1` (default Ollama) or your custom endpoint
+- **Models**: Any model you have installed locally (e.g., `qwen-coder`, `llama3`, `mistral`, etc.)
+- **API Key**: Use `local` or any string (not validated for local models)
+
+**Example Configuration for Local Ollama:**
+
+1. Start Ollama server: `ollama serve`
+2. Pull a model: `ollama pull qwen-coder:30b`
+3. In Brainforest "Add Model":
+   - **Endpoint**: `http://localhost:11434/v1`
+   - **API Key**: `local`
+   - **Model**: `qwen-coder:30b`
+
+**Benefits of Local Models:**
+
+- 🔒 **Privacy**: Your data never leaves your machine
+- 💰 **Cost-effective**: No API costs after initial setup
+- ⚡ **Fast**: Direct local inference without network latency
+- 🎛️ **Full control**: Choose any model that fits your hardware
+
+> **Note**: Brainforest automatically detects OpenAI-compatible endpoints (including Ollama) and uses the appropriate request format. No code modifications needed!
 
 ## Prompt Format
 
