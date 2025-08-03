@@ -229,6 +229,19 @@ Brainforest supports various LLM providers through the "Add Model" feature:
 - **Models**: `claude-3-opus`, `claude-3-sonnet`, etc.
 - **API Key**: Get from [Anthropic Console](https://console.anthropic.com/)
 
+##### OpenRouter
+
+- **Endpoint**: `https://openrouter.ai/api/v1/`
+- **Models**: Access to 100+ models including `anthropic/claude-3.5-sonnet`, `openai/gpt-4`, `meta-llama/llama-3.1-405b`, etc.
+- **API Key**: Get from [OpenRouter Console](https://openrouter.ai/keys)
+
+**Benefits of OpenRouter:**
+
+- 🎯 **Model Variety**: Access 100+ models from different providers in one place
+- 💰 **Competitive Pricing**: Often cheaper than direct API access
+- ⚡ **Unified Interface**: One API key for multiple model providers
+- 📊 **Usage Analytics**: Built-in usage tracking and cost management
+
 ##### Local Models with Ollama
 
 Brainforest now supports local LLM models running through Ollama or other OpenAI-compatible servers:

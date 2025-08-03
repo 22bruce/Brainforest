@@ -1,4 +1,4 @@
-console.log("=== LLM SERVICE v2.0 LOADED ===");
+console.log("=== LLM SERVICE v3.0 LOADED - OpenRouter Support Added ===");
 
 class LLMService {
     constructor() {
@@ -261,12 +261,16 @@ class LLMService {
                 max_tokens: 1000
             };
             
-            // For OpenAI-compatible APIs, use /v1/chat/completions endpoint
-            if (endpoint.endsWith('/v1')) {
-                apiUrl = `${endpoint}/chat/completions`;
+            // For OpenAI-compatible APIs, use proper endpoint construction
+            if (endpoint.endsWith('/v1/') || endpoint.endsWith('/v1')) {
+                // For endpoints like "https://openrouter.ai/api/v1/" or "http://localhost:11434/v1"
+                const baseUrl = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint;
+                apiUrl = `${baseUrl}/chat/completions`;
             } else if (endpoint.endsWith('/')) {
+                // For endpoints like "https://api.openai.com/"
                 apiUrl = `${endpoint}v1/chat/completions`;
             } else {
+                // For endpoints like "https://api.openai.com"
                 apiUrl = `${endpoint}/v1/chat/completions`;
             }
             
@@ -278,6 +282,13 @@ class LLMService {
                 console.log('Added Authorization header');
             } else {
                 console.log('No Authorization header (local/empty API key)');
+            }
+            
+            // Add OpenRouter-specific headers if needed
+            if (endpoint.includes('openrouter.ai')) {
+                headers['HTTP-Referer'] = 'https://brainforest.app'; // Optional: your app name
+                headers['X-Title'] = 'Brainforest Mind Map'; // Optional: your app name
+                console.log('Added OpenRouter-specific headers');
             }
         }
         
